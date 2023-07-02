@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.14.0 )
+cmake_minimum_required( VERSION 3.17.0 )
 
 project(VaderSniper)
 
@@ -10,7 +10,7 @@ FetchContent_Declare(ftxui
   GIT_TAG v4.1.1
 )
 
-set(FTXUI_BUILD_EXAMPLES OFF)
+set(FTXUI_BUILD_EXAMPLES ON)
 set(FTXUI_ENABLE_INSTALL OFF)
 
 FetchContent_GetProperties(ftxui)
@@ -30,11 +30,20 @@ if(NOT cpp-httplib_POPULATED)
     add_subdirectory(${cpp-httplib_SOURCE_DIR} ${cpp-httplib_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-
 FetchContent_MakeAvailable(cpp-httplib)
 FetchContent_MakeAvailable(ftxui)
 
-#
+# Search OpenSSL
+find_package(PkgConfig REQUIRED)
+pkg_search_module(OPENSSL REQUIRED openssl)
+
+if( OPENSSL_FOUND )
+    include_directories(${OPENSSL_INCLUDE_DIRS})
+    link_directories(${OPENSSL_LIBRARY_DIRS})
+    message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+else()
+    # Error; with REQUIRED, pkg_search_module() will throw an error by it's own
+endif()
 
 add_executable  (   vader-sniper
                     vsnipe.cc 
@@ -49,6 +58,8 @@ target_link_libraries(  vader-sniper
                         ftxui::screen
                         ftxui::dom
                         ftxui::component
+                        ssl
+                        crypto
                     )
 
 target_include_directories( vader-sniper
